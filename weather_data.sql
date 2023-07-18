@@ -45,7 +45,6 @@ CREATE VIEW total_rain_4h AS
     GROUP BY station_name;
 
 
-
 -- PARA ADICIONAR A CONSTRAINT DE REMOVER DUPLICATAS FOI NECESSARIO REMOVER TODAS AS DUPLICATAS
 
 -- RENOMEIA A TABELA ORIGINAL
@@ -63,7 +62,3 @@ DROP TABLE weather_data_old;
 -- ADICIONA O CONSTRAINT PARA EVITAR FUTURAS DUPLICATAS
 ALTER TABLE weather_data ADD CONSTRAINT
     unique_measurements_constraint UNIQUE (station_id, measurement_timestamp);
-
-
-697
-
