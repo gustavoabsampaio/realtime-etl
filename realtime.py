@@ -4,11 +4,13 @@ import pandas as pd
 from datetime import datetime
 from prefect import flow, task
 from pytz import timezone
+import psycopg2
 from sqlalchemy import create_engine
+from time import sleep
 
 @task
 def extract():
-    print("EXTRACT START")
+    print("\nEXTRACT START")
 
     # request urls
     base_url = "https://api.data.gov.sg/v1/environment/"
@@ -46,7 +48,7 @@ def extract():
         response_data_rainfall = None
         raise ValueError("ERROR on the rainfall GET request: ", e)
 
-    print("EXTRACT END")
+    print("EXTRACT END\n")
 
     response_data = [response_data_airtemp, response_data_rainfall]
 
@@ -54,7 +56,7 @@ def extract():
 
 @task
 def transform(response_data):    
-    print("DATA FILTERING START")
+    print("\nDATA FILTERING START")
 
     if error_sim % 10 == 0:
         raise ValueError("TEST ERROR")
@@ -75,7 +77,6 @@ def transform(response_data):
     readings_rainfall = pd.DataFrame(response_data_rainfall['items'][0]['readings'])
 
     reading_timestamp = response_data_airtemp['items'][0]['timestamp']
-
     timestamp_df = pd.to_datetime(reading_timestamp)
 
     readings_airtemp['timestamp'] = timestamp_df
@@ -101,22 +102,26 @@ def transform(response_data):
 
 @task
 def load(transformed_data):
+    print("\nLOAD START")
     try:
-        print("LOAD START")
 
         # connect to the database
         engine = create_engine('postgresql://gustavo:postgres@localhost:5432/gustavo')
 
         table = 'weather_data'
-
         # convert Dataframe to psql and append to table
         transformed_data.to_sql(table, engine, if_exists='append', index=False, method='multi')
 
-        print("LOAD END\n")
-
     except Exception as e:
-        print("Data insertion failed: ", e)
-
+        e = str(e).split("\"")
+        if e[1] == "unique_measurements_constraint":
+            print("No new measurements, skipping insertion")
+            print("LOAD SKIP\n")
+            pass
+        else:
+            raise("Data insertion failed: ", e)
+    print("LOAD END\n")
+    
 def print_readings(filtered_df):
     # Print the filtered readings
     for _, row in filtered_df.iterrows():
@@ -138,5 +143,6 @@ while True:
     # return state must be true to keep the pipeline running in case of exceptions
     main_flow(return_state=True)
     error_sim += 1
+    sleep(60)
 
 # main_flow()
