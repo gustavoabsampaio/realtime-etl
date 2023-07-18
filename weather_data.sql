@@ -32,6 +32,7 @@ ALTER TABLE weather_data ADD CONSTRAINT
 -- VIEWS
 
 -- VIEW PARA A TEMPERATURA MEDIA DE CADA DIA
+DROP VIEW IF EXISTS average_temperatures_daily;
 CREATE VIEW average_temperatures_daily AS
     SELECT station_name, to_char(AVG(temperature), '90.00') AS temp_avg, date(measurement_timestamp) as measurement_date
     FROM weather_data
@@ -39,21 +40,25 @@ CREATE VIEW average_temperatures_daily AS
     ORDER BY measurement_date DESC;
 
 -- VIEW PARA A TEMPERATURA MEDIA DAS ULTIMAS 24H
+DROP VIEW IF EXISTS average_temperatures_24h;
 CREATE VIEW average_temperatures_24h AS
     SELECT station_name, to_char(AVG(temperature), '90.00') AS temp_avg
     FROM weather_data
     WHERE measurement_timestamp >= current_timestamp AT TIME ZONE 'SGT' - INTERVAL '1 day'
     GROUP BY station_name;
 
--- RETORNA A QUANTIDADE DE CHUVA TOTAL DIARIA
+DROP VIEW IF EXISTS total_rain_daily;
+-- VIEW PARA A QUANTIDADE DE CHUVA TOTAL DIARIA
 CREATE VIEW total_rain_daily AS
     SELECT station_name, to_char(SUM(rainfall), '990.00') total_rain, date(measurement_timestamp) as measurement_date
     FROM weather_data
     GROUP BY station_name, measurement_date
     ORDER BY measurement_date DESC;
 
+-- VIEW PARA A QUANTIDADE DE CHUVA TOTAL NAS ULTIMAS 4H
+DROP VIEW IF EXISTS total_rain_4h;
 CREATE VIEW total_rain_4h AS
-    SELECT station_name, SUM(rainfall) AS total_rain
+    SELECT station_name, to_char(SUM(rainfall), '990.00') AS total_rain
     FROM weather_data
     WHERE measurement_timestamp >= current_timestamp AT TIME ZONE 'SGT' - INTERVAL '4 hours'
     GROUP BY station_name;
