@@ -6,7 +6,7 @@ CREATE TABLE weather_data (
     station_name VARCHAR(50),
     latitude FLOAT,
     longitude FLOAT,
-    measurement_timestamp TIMESTAMP AT TIME ZONE 'SGT',
+    measurement_timestamp TIMESTAMP,
     temperature FLOAT,
     rainfall FLOAT
 );
@@ -63,3 +63,7 @@ DROP TABLE weather_data_old;
 -- ADICIONA O CONSTRAINT PARA EVITAR FUTURAS DUPLICATAS
 ALTER TABLE weather_data ADD CONSTRAINT
     unique_measurements_constraint UNIQUE (station_id, measurement_timestamp);
+
+
+697
+
