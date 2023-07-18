@@ -116,7 +116,6 @@ def load(transformed_data):
         e = str(e).split("\"")
         if e[1] == "unique_measurements_constraint":
             print("No new measurements, skipping insertion")
-            print("LOAD SKIP\n")
             pass
         else:
             raise("Data insertion failed: ", e)
