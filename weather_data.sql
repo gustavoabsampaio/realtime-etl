@@ -11,6 +11,20 @@ CREATE TABLE weather_data (
     rainfall FLOAT
 );
 
+-- AJUSTA O FUSO HORARIO
+CREATE OR REPLACE FUNCTION adjust_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.measurement_timestamp := NEW.measurement_timestamp + INTERVAL '11 hours';
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER adjust_timestamp_trigger
+BEFORE INSERT ON weather_data
+FOR EACH ROW
+EXECUTE FUNCTION adjust_timestamp();
+
 -- CONSTRAINT PARA IMPEDIR DUPLICATAS
 ALTER TABLE weather_data ADD CONSTRAINT
     unique_measurements_constraint UNIQUE (station_id, measurement_timestamp);
