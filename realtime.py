@@ -10,7 +10,6 @@ from time import sleep
 
 @task
 def extract():
-    print("\nEXTRACT START")
 
     # request urls
     base_url = "https://api.data.gov.sg/v1/environment/"
@@ -48,18 +47,12 @@ def extract():
         response_data_rainfall = None
         raise ValueError("ERROR on the rainfall GET request: ", e)
 
-    print("EXTRACT END\n")
-
     response_data = [response_data_airtemp, response_data_rainfall]
 
     return response_data
 
 @task
 def transform(response_data):    
-    print("\nDATA FILTERING START")
-
-    if error_sim % 10 == 0:
-        raise ValueError("TEST ERROR")
 
     if response_data == None:
         raise ValueError("No data")
@@ -67,7 +60,6 @@ def transform(response_data):
     response_data_airtemp = response_data[0].json()
     response_data_rainfall = response_data[1].json()
     
-
     # Create a DataFrame with the station data
     stations = pd.DataFrame(response_data_airtemp['metadata']['stations'])
     stations = stations.drop(columns=['device_id'])
@@ -95,14 +87,13 @@ def transform(response_data):
     # Drop the original 'location' column
     df.drop('location', axis=1, inplace=True)
 
+    # Print fo visualizing transformed data
     # print(df)
 
-    print("DATA FILTERING END\n")
     return df
 
 @task
 def load(transformed_data):
-    print("\nLOAD START")
     try:
 
         # connect to the database
@@ -119,29 +110,15 @@ def load(transformed_data):
             pass
         else:
             raise("Data insertion failed: ", e)
-    print("LOAD END\n")
-    
-def print_readings(filtered_df):
-    # Print the filtered readings
-    for _, row in filtered_df.iterrows():
-        print(f"Station: {row['station_id']}, Name: {row['name']}, Lat/Long: ({row['location']['latitude']}, {row['location']['longitude']}), Temperature: {row['value']}°C, Horario(SGT): {row['timestamp']}")
 
 @flow
 def main_flow():
     response_data = extract()
     transformed_data = transform(response_data)
     load(transformed_data)
-    # print_readings(transformed_data)
-    
-
-# every 10 runs there will be an exception to test the exception handling and pipeline consistency
-error_sim = 1
 
 while True:
     # main flow
     # return state must be true to keep the pipeline running in case of exceptions
     main_flow(return_state=True)
-    error_sim += 1
     sleep(60)
-
-# main_flow()
